@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { IcoSend, IcoCheck } from "@/components/icons";
-import { CHIPS, SQUAD_HEALTH, OKRS, EPICS, PLAYBOOK } from "@/data/constants";
+import { IcoSend, IcoCheck, IcoRight, IcoX } from "@/components/icons";
+import { CHIPS, SQUAD_HEALTH, OKRS, EPICS, PLAYBOOK, DEMO_SCRIPT } from "@/data/constants";
 import { uid } from "@/data/helpers";
 import { respond } from "@/data/respond";
 import { useCoach } from "@/context/CoachContext";
@@ -10,54 +10,25 @@ import Typing from "./Typing";
 import WhatIfPanel from "./WhatIfPanel";
 import Breadcrumb from "./Breadcrumb";
 
-/* Build a greeting + proactive alerts for a given scope */
-function buildInitialMessages(scope, alerts) {
-  const msgs = [];
-
-  /* Greeting */
-  msgs.push({
-    id: uid(), role: "ai", intent: "greeting",
-    text: `Hi, I'm Agent Coach \u2014 your AI delivery intelligence assistant. I'm here to help you understand and improve ${scope.name}'s delivery health.
-
-I can analyse flow metrics, OKR progress, epic forecasts, and work patterns. I can diagnose systemic issues, recommend evidence-based interventions from the playbook, compare squads, run what-if simulations, and help plan your next sprint.
-
-What would you like to explore?`,
-  });
-
-  /* Proactive alerts */
-  const scopeAlerts = alerts.filter(a => {
-    if (a.read) return false;
-    if (scope.type === "squad") return a.squad === scope.name;
-    return true;
-  }).filter(a => a.severity === "critical" || a.severity === "warning");
-
-  if (scopeAlerts.length) {
-    scopeAlerts.forEach(a => {
-      msgs.push({
-        id: uid(), role: "ai", intent: "proactiveAlert",
-        text: `\u26A0\uFE0F Alert \u2014 ${a.squad}: ${a.message}`,
-        alert: a,
-      });
-    });
-  }
-
-  return msgs;
-}
-
 export default function CoachTab() {
-  const { scope, squadData, healthData, alerts, interventions, conversations, setConversations } = useCoach();
+  const { scope, setScope, squadData, healthData, alerts, interventions, conversations, setConversations } = useCoach();
 
-  /* ── Conversation persistence keyed by scope ──────── */
   const scopeKey = `${scope.type}-${scope.id}`;
   const savedMsgs = conversations.get(scopeKey);
 
-  const [msgs, setMsgs]             = useState(() => savedMsgs || buildInitialMessages(scope, alerts));
+  const [msgs, setMsgs]             = useState(() => savedMsgs || []);
   const [showWhatIf, setShowWhatIf] = useState(false);
   const [input, setInput]           = useState("");
   const [busy, setBusy]             = useState(false);
   const [dynamicChips, setDynamicChips] = useState(CHIPS);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected]     = useState(new Set());
+
+  /* ── Demo mode ──────────────────────────────────────── */
+  const [demoMode, setDemoMode]     = useState(false);
+  const [demoStep, setDemoStep]     = useState(0);
+  const demoStarting = useRef(false);
+
   const bottom = useRef(null);
   const prevScopeKey = useRef(scopeKey);
 
@@ -72,21 +43,94 @@ export default function CoachTab() {
     }
   }, [msgs, scopeKey, setConversations]);
 
-  /* Load conversation when scope changes */
+  /* Load conversation when scope changes (skip if demo is starting) */
   useEffect(() => {
     if (scopeKey !== prevScopeKey.current) {
       prevScopeKey.current = scopeKey;
+      if (demoStarting.current) {
+        demoStarting.current = false;
+        return;
+      }
       const saved = conversations.get(scopeKey);
-      setMsgs(saved || buildInitialMessages(scope, alerts));
+      setMsgs(saved || []);
       setDynamicChips(CHIPS);
       setShowWhatIf(false);
       setSelectMode(false);
       setSelected(new Set());
+      setDemoMode(false);
+      setDemoStep(0);
     }
   }, [scopeKey, conversations, scope, alerts]);
 
+  const handleNewChat = useCallback(() => {
+    setMsgs([]);
+    setDynamicChips(CHIPS);
+    setShowWhatIf(false);
+    setSelectMode(false);
+    setSelected(new Set());
+    setDemoMode(false);
+    setDemoStep(0);
+    setConversations(prev => {
+      const next = new Map(prev);
+      next.delete(scopeKey);
+      return next;
+    });
+  }, [scopeKey, setConversations]);
+
   useEffect(() => { bottom.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs, busy]);
 
+  /* ── Demo logic ─────────────────────────────────────── */
+  const handleStartDemo = useCallback(() => {
+    /* Switch to Checkout Crew context for the demo */
+    demoStarting.current = true;
+    setScope("crew", "checkout");
+    setMsgs([]);
+    setDemoMode(true);
+    setDemoStep(0);
+    setDynamicChips([]);
+    setShowWhatIf(false);
+    /* Inject first turn after a brief delay */
+    setBusy(true);
+    setTimeout(() => {
+      const turn = DEMO_SCRIPT[0];
+      if (!turn) return;
+      const userMsg = { id: uid(), role: "user", text: turn.user };
+      setMsgs([userMsg]);
+      /* Then show typing, then agent response */
+      setTimeout(() => {
+        const agentMsg = { id: uid(), role: "ai", ...turn.agent };
+        setMsgs(m => [...m, agentMsg]);
+        if (turn.agent.chips) setDynamicChips(turn.agent.chips);
+        setDemoStep(1);
+        setBusy(false);
+      }, 1200);
+    }, 400);
+  }, [setScope]);
+
+  const handleDemoNext = useCallback(() => {
+    if (!demoMode || demoStep >= DEMO_SCRIPT.length) return;
+    const turn = DEMO_SCRIPT[demoStep];
+    if (!turn) { setDemoMode(false); return; }
+
+    setBusy(true);
+    const userMsg = { id: uid(), role: "user", text: turn.user };
+    setMsgs(m => [...m, userMsg]);
+    setTimeout(() => {
+      const agentMsg = { id: uid(), role: "ai", ...turn.agent };
+      setMsgs(m => [...m, agentMsg]);
+      if (turn.agent.chips) setDynamicChips(turn.agent.chips);
+      setDemoStep(s => s + 1);
+      setBusy(false);
+    }, 1200);
+  }, [demoMode, demoStep]);
+
+  const handleExitDemo = useCallback(() => {
+    setDemoMode(false);
+    setDemoStep(0);
+    setDynamicChips(CHIPS);
+  }, []);
+
+  /* ── Normal send ────────────────────────────────────── */
   const buildContext = useCallback(() => ({
     scope, squadData,
     history: msgs,
@@ -97,6 +141,7 @@ export default function CoachTab() {
 
   const send = useCallback((text) => {
     if (!text.trim() || busy) return;
+    /* If in demo mode and user presses Enter with empty input, advance demo */
     setMsgs(m => [...m, { id: uid(), role: "user", text }]);
     setInput("");
     setBusy(true);
@@ -111,7 +156,23 @@ export default function CoachTab() {
     }, 900);
   }, [busy, buildContext]);
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      if (demoMode && !input.trim()) {
+        e.preventDefault();
+        handleDemoNext();
+      } else {
+        send(input);
+      }
+    }
+  };
+
   const handleChipClick = (c) => {
+    if (demoMode) {
+      /* In demo mode, chip clicks advance to next step */
+      handleDemoNext();
+      return;
+    }
     if (c === "What-if simulator") { setShowWhatIf(true); return; }
     if (c === "Sprint planning help") { send("Help me plan the next sprint"); return; }
     send(c);
@@ -140,9 +201,11 @@ export default function CoachTab() {
     setSelected(new Set());
   };
 
+  const demoFinished = demoMode && demoStep >= DEMO_SCRIPT.length;
+
   return (
     <div className="flex flex-col h-full">
-      <Breadcrumb />
+      <Breadcrumb onNewChat={handleNewChat} onDemo={handleStartDemo} demoMode={demoMode} />
 
       <div className="flex-1 overflow-y-auto px-5 pt-5 pb-2 bg-neutral-50/50">
         {msgs.map(m => (
@@ -166,15 +229,33 @@ export default function CoachTab() {
         </div>
       )}
 
-      {/* Dynamic chips */}
-      <div className="px-4 py-2 flex gap-2 overflow-x-auto flex-shrink-0 border-t border-neutral-100">
-        {dynamicChips.map(c => (
-          <button key={c} onClick={() => handleChipClick(c)} disabled={busy}
-            className="flex-shrink-0 text-xs text-[#1a1a1a] bg-[#FFF4CC] border border-[#FFE066] hover:bg-[#FFE066] disabled:opacity-40 px-3 py-1.5 rounded-full transition-colors whitespace-nowrap font-medium">
-            {c}
+      {/* Demo mode controls OR dynamic chips */}
+      {demoMode ? (
+        <div className="px-4 py-3 flex items-center justify-center gap-4 flex-shrink-0 border-t border-neutral-100 bg-[#FFF9E0]">
+          {!demoFinished && !busy ? (
+            <button onClick={handleDemoNext}
+              className="flex items-center gap-2 text-sm font-semibold text-[#1a1a1a] bg-[#FFCC00] hover:bg-[#e6b800] px-6 py-2.5 rounded-xl transition-colors shadow-sm">
+              Continue
+              <IcoRight size={14} />
+            </button>
+          ) : demoFinished ? (
+            <p className="text-xs text-neutral-500 font-medium">Demo complete \u2014 try clicking &ldquo;Use this play&rdquo; on a playbook above, or start a new chat.</p>
+          ) : null}
+          <button onClick={handleExitDemo}
+            className="flex items-center gap-1 text-xs text-neutral-400 hover:text-neutral-600 transition-colors">
+            <IcoX size={11} /> Exit demo
           </button>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="px-4 py-2 flex gap-2 overflow-x-auto flex-shrink-0 border-t border-neutral-100">
+          {dynamicChips.map(c => (
+            <button key={c} onClick={() => handleChipClick(c)} disabled={busy}
+              className="flex-shrink-0 text-xs text-[#1a1a1a] bg-[#FFF4CC] border border-[#FFE066] hover:bg-[#FFE066] disabled:opacity-40 px-3 py-1.5 rounded-full transition-colors whitespace-nowrap font-medium">
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Input bar */}
       <div className="px-4 pb-4 pt-2 flex-shrink-0">
@@ -182,14 +263,16 @@ export default function CoachTab() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send(input)}
-            placeholder="Ask about flow metrics, OKRs, epics, or coaching..."
+            onKeyDown={handleKeyDown}
+            placeholder={demoMode && !demoFinished ? "Press Enter or click Continue to advance the demo..." : "Ask about flow metrics, OKRs, epics, or coaching..."}
             className="flex-1 text-sm text-neutral-800 placeholder-neutral-400 bg-transparent outline-none"
           />
-          <button onClick={() => setSelectMode(m => !m)} className="text-neutral-300 hover:text-neutral-500 transition-colors p-1" title="Select messages to copy">
-            <IcoCheck size={14} />
-          </button>
-          <button onClick={() => send(input)} disabled={!input.trim() || busy}
+          {!demoMode && (
+            <button onClick={() => setSelectMode(m => !m)} className="text-neutral-300 hover:text-neutral-500 transition-colors p-1" title="Select messages to copy">
+              <IcoCheck size={14} />
+            </button>
+          )}
+          <button onClick={() => demoMode && !input.trim() ? handleDemoNext() : send(input)} disabled={(!input.trim() && !demoMode) || busy}
             className="w-8 h-8 rounded-full bg-[#FFCC00] flex items-center justify-center flex-shrink-0 disabled:opacity-30 hover:bg-[#e6b800] transition-colors shadow-sm">
             <IcoSend size={13} className="text-[#1a1a1a]" />
           </button>

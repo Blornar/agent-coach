@@ -15,13 +15,16 @@ const CHARTS = {
 };
 
 /* lazy-loaded rich cards (avoid circular deps) */
-let ComparisonCard, AlertCard, EntityCard, PlaybookRefCard, HealthCheckCard, SprintPlanCard;
+let ComparisonCard, AlertCard, EntityCard, PlaybookRefCard, HealthCheckCard, SprintPlanCard, CrewBriefingCard, PlaybookActionCard, InlineInterventionForm;
 try { ComparisonCard = require("./ComparisonCard").default; } catch {}
 try { AlertCard = require("./AlertCard").default; } catch {}
 try { EntityCard = require("./EntityCard").default; } catch {}
 try { PlaybookRefCard = require("./PlaybookRefCard").default; } catch {}
 try { HealthCheckCard = require("./HealthCheckCard").default; } catch {}
 try { SprintPlanCard = require("./SprintPlanCard").default; } catch {}
+try { CrewBriefingCard = require("./CrewBriefingCard").default; } catch {}
+try { PlaybookActionCard = require("./PlaybookActionCard").default; } catch {}
+try { InlineInterventionForm = require("./InlineInterventionForm").default; } catch {}
 
 function CopyButton({ msg }) {
   const [copied, setCopied] = useState(false);
@@ -38,6 +41,26 @@ function CopyButton({ msg }) {
     <button onClick={handleCopy} className="opacity-0 group-hover:opacity-100 absolute -top-2 right-2 text-xs bg-white border border-slate-200 text-slate-400 hover:text-slate-600 px-2 py-0.5 rounded-md shadow-sm transition-all" title="Copy">
       {copied ? "Copied!" : "Copy"}
     </button>
+  );
+}
+
+function PlaybookActionsRenderer({ actions, onUsePlay }) {
+  if (!actions?.length || !PlaybookActionCard) return null;
+  const [activeForm, setActiveForm] = useState(null);
+  return (
+    <>
+      {actions.map((pb, i) => pb && (
+        <PlaybookActionCard key={pb.id || i} data={pb} onUsePlay={(p) => setActiveForm(p)} />
+      ))}
+      {activeForm && InlineInterventionForm && (
+        <InlineInterventionForm
+          playbook={activeForm}
+          targetId="phoenix"
+          onComplete={() => setActiveForm(null)}
+          onCancel={() => setActiveForm(null)}
+        />
+      )}
+    </>
   );
 }
 
@@ -71,6 +94,8 @@ export default function Bubble({ msg, selected, onSelect }) {
         {msg.playbookRef && PlaybookRefCard && <PlaybookRefCard data={msg.playbookRef} />}
         {msg.healthCheck && HealthCheckCard && <HealthCheckCard data={msg.healthCheck} />}
         {msg.sprintPlan && SprintPlanCard && <SprintPlanCard data={msg.sprintPlan} />}
+        {msg.crewBriefing && CrewBriefingCard && <CrewBriefingCard data={msg.crewBriefing} />}
+        {msg.playbookActions && <PlaybookActionsRenderer actions={msg.playbookActions} />}
       </div>
     </div>
   );

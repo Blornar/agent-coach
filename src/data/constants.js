@@ -397,3 +397,104 @@ export const SECTION_STYLE = {
   action:  { dot: "bg-amber-500",  heading: "text-amber-800",  bg: "bg-amber-50",  border: "border-amber-100"  },
   neutral: { dot: "bg-slate-400",   heading: "text-slate-600",   bg: "bg-slate-50",   border: "border-slate-200"   },
 };
+
+/* ── Demo conversation script ─────────────────────────── */
+
+/* Crew-level distribution (averaged Phoenix + Orion) */
+const CHECKOUT_CREW_DISTRIBUTION = [
+  { name: "Features",  value: 42, color: C.navy  },
+  { name: "Bugs",      value: 30, color: C.cbaYellow },
+  { name: "Tech Debt", value: 20, color: C.teal  },
+  { name: "Risk",      value:  8, color: C.coral  },
+];
+
+export const DEMO_SCRIPT = [
+  {
+    user: "Tell me everything about the Checkout Crew",
+    agent: {
+      text: `Here's a comprehensive briefing on Checkout Crew for the current quarter.
+
+Checkout Crew owns the checkout conversion pipeline and consists of two squads \u2014 Squad Phoenix and Squad Orion. Together they're responsible for 3 active epics tied to 2 OKRs, with a combined velocity of approximately 31 items per sprint.
+
+The crew's delivery health is mixed. While Squad Orion is performing well and maintaining healthy flow metrics, Squad Phoenix is experiencing significant flow degradation that's putting two of the crew's three Key Results at risk. Here's the breakdown across four key dimensions:`,
+      intent: "crewBriefing",
+      crewBriefing: {
+        crewName: "Checkout Crew",
+        flowTime: {
+          data: CREW_METRICS.checkout.flowTime,
+          narrative: "Crew median flow time has increased from 3.5d to 4.8d over 6 sprints. This is being driven almost entirely by Squad Phoenix (6.4d) \u2014 Squad Orion is healthy at 3.1d. The divergence began in Sprint 20 and has widened every sprint since.",
+        },
+        velocity: {
+          data: VELOCITY_DATA,
+          narrative: "Combined crew velocity has declined from 40 items/sprint (S20) to 31 items/sprint (S23). Phoenix has dropped 44% (18 \u2192 10) while Orion has held steady at 19\u201321. The crew is increasingly reliant on a single squad for output.",
+        },
+        distribution: {
+          data: CHECKOUT_CREW_DISTRIBUTION,
+          narrative: "Unplanned work (bugs) accounts for 30% of the crew's output \u2014 nearly double the healthy benchmark of 15\u201320%. This is heavily skewed by Phoenix's 41% bug ratio. Orion's bug ratio is a healthy 18%. The imbalance suggests a quality problem concentrated in Phoenix's codebase.",
+        },
+        epics: {
+          data: EPICS.filter(e => e.okr === "KR1" || e.okr === "KR2" || e.okr === "KR3"),
+          narrative: "Of 3 active epics, 2 are at risk of missing their target dates. PAY-E001 (Payment Failure Remediation) is only 34% complete with a P70 forecast 14 days past target. PAY-E003 (Abandonment Analytics) is at just 12%. Only PAY-E002 (One-Click Checkout), owned by Orion, is on track.",
+        },
+        summary: "Bottom line: Checkout Crew's delivery health is being dragged down by Squad Phoenix. Two of three epics and two of three Key Results are at risk because of Phoenix's flow problems. Orion is carrying the crew \u2014 but if Orion takes on any of Phoenix's spillover, it could destabilise the one squad that's currently healthy.\n\nThe most urgent area to investigate is Phoenix's flow time and the factors driving it.",
+      },
+      chips: ["What's driving the flow time issue?", "Which squads need help?", "Compare Phoenix and Orion", "OKR impact"],
+    },
+  },
+  {
+    user: "Flow time looks concerning. What are the primary contributors to this issue, and which squads in this crew need the most help?",
+    agent: {
+      text: `You're right to focus on flow time \u2014 it's the metric that most directly reflects how long value takes to reach customers, and it's the one that's deteriorating fastest.
+
+The flow time problem in Checkout Crew is almost entirely concentrated in Squad Phoenix. Let me break down what's happening and why.
+
+Squad Phoenix vs Squad Orion \u2014 Flow Time:
+\u2022 Phoenix: 6.4d median, 12.1d p85 \u2014 both well above healthy thresholds and worsening every sprint
+\u2022 Orion: 3.1d median, 5.4d p85 \u2014 healthy, stable, and within benchmarks
+
+So the crew-level flow time increase is not a systemic crew problem \u2014 it's a Phoenix-specific problem that's dragging the crew average up.
+
+The primary contributors to Phoenix's flow time inflation are:
+
+1. WIP Overload (root cause)
+Phoenix is carrying 9 active items against a configured WIP limit of 6 \u2014 that's 50% over capacity. This is the single biggest driver. Little's Law tells us that Flow Time = WIP \u00F7 Throughput, so excess WIP directly inflates the time every item takes to complete. With 9 items active and capacity for 6, at least 3 items are effectively queued, waiting for attention while consuming mental overhead.
+
+2. Review and Testing Bottlenecks (symptom of WIP overload)
+Flow Efficiency has collapsed to 31%, meaning items spend 69% of their lifecycle waiting \u2014 in review queues, testing queues, or blocked. The p85 flow time at 12.1 days (nearly 2\u00D7 the median) tells us that some items are getting severely stuck at specific stages, likely Review and Testing.
+
+3. High Bug Ratio (compounding factor)
+41% of Phoenix's completed work has been bug fixes \u2014 more than double the healthy level. This means the squad is spending most of its time on unplanned reactive work rather than progressing planned epics. Bug investigation is interrupt-driven, fragments developer focus, and displaces sprint commitments.
+
+4. Aged Items (hidden capacity drain)
+Phoenix has 3 items past the 14-day age threshold: PAY-261 (15d), PAY-243 (21d), and PAY-230 (28d). These are almost certainly blocked but haven't been flagged as such. Each one occupies a WIP slot without producing output \u2014 effectively phantom capacity.
+
+Squad Orion does not need intervention at this time. Their metrics are healthy across the board: 3.1d flow time, 62% efficiency, 21 items/sprint velocity, and WIP within limit (5/6). The pair programming intervention started in S21 appears to be working well.
+
+My recommendation: focus all coaching attention on Squad Phoenix. The compounding nature of their problems (WIP \u2192 queue time \u2192 slow flow \u2192 more bugs \u2192 more WIP) means that without intervention, the situation will continue to deteriorate.`,
+      intent: "comparison",
+      comparison: {
+        rows: [
+          { id: "phoenix", name: "Squad Phoenix", flowTime: 6.4, velocity: 10, efficiency: 31, wip: 9, wipLimit: 6, health: 2 },
+          { id: "orion",   name: "Squad Orion",   flowTime: 3.1, velocity: 21, efficiency: 62, wip: 5, wipLimit: 6, health: 4 },
+        ],
+      },
+      chips: ["Are there any playbooks for this?", "What-if simulator", "Sprint planning help for Phoenix", "Show me coaching recs"],
+    },
+  },
+  {
+    user: "Are there any playbooks that could help with this?",
+    agent: {
+      text: `Yes \u2014 based on the diagnosis, there are two playbooks that are directly relevant to Phoenix's situation. Both have strong track records across similar teams in the organisation.
+
+The first addresses the root cause (WIP overload), and the second addresses the most visible symptom (items getting stuck in the system without being flagged as blocked). I'd recommend implementing them in sequence \u2014 the WIP cap first, then the blocker escalation ritual in the following sprint, so the team isn't overwhelmed with process changes all at once.
+
+If you'd like to adopt either play, click "Use this play" to create a tracked intervention. I'll monitor the impact on Phoenix's flow metrics and report back on whether the intervention is improving things, holding steady, or not working \u2014 so you'll know within 2 sprints whether to stay the course or adjust.`,
+      intent: "playbook",
+      playbookActions: [
+        PLAYBOOK.find(p => p.id === "pb1"),
+        PLAYBOOK.find(p => p.id === "pb4"),
+      ],
+      chips: ["What-if: reduce Phoenix WIP to 6", "Help me plan Phoenix's next sprint", "Full health check", "Tell me about PAY-E001"],
+    },
+  },
+];
