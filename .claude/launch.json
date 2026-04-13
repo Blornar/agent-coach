@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "agent-coach-dev",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["D:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js", "run", "dev", "--", "--port", "3005"],
+      "port": 3005,
+      "cwd": "E:/Claude/agent-coach"
+    }
+  ]
+}

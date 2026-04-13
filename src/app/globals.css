@@ -2,25 +2,49 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1a1a1a;
+  --cba-yellow: #FFCC00;
+  --cba-yellow-light: #FFF4CC;
+  --cba-yellow-mid: #FFE066;
+  --cba-black: #1a1a1a;
+  --cba-charcoal: #2d2d2d;
+  --cba-warm-gray: #f7f5f2;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-cba-yellow: var(--cba-yellow);
+  --color-cba-yellow-light: var(--cba-yellow-light);
+  --color-cba-black: var(--cba-black);
+  --color-cba-charcoal: var(--cba-charcoal);
+  --color-cba-warm-gray: var(--cba-warm-gray);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Range slider styling for CommBank yellow */
+input[type="range"] {
+  accent-color: var(--cba-yellow);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
