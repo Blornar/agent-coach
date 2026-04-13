@@ -2,7 +2,7 @@ import { C } from "./palette";
 import {
   IcoChat, IcoTarget, IcoLayers, IcoGit, IcoFlag,
   IcoBook, IcoClock, IcoGrid, IcoTrendUp, IcoTrendDn,
-  IcoMinus, IcoActivity,
+  IcoMinus, IcoActivity, IcoPencil,
 } from "@/components/icons";
 
 export const ORG = {
@@ -348,13 +348,14 @@ export const CHIPS = ["Flow efficiency trend", "WIP load", "Work type breakdown"
 
 export const NAV = [
   { id: "coach",         Icon: IcoChat,   label: "Coach",             badge: null },
+  { id: "workshop",      Icon: IcoPencil, label: "Workshop",          badge: null },
   { id: "playbook",      Icon: IcoBook,   label: "Playbook",          badge: null },
   { id: "interventions", Icon: IcoFlag,   label: "Interventions",     badge: null },
   { id: "reports",       Icon: IcoClock,  label: "Scheduled Prompts", badge: null },
 ];
 
 export const TAB_LABELS = {
-  coach: "Coach", playbook: "Playbook",
+  coach: "Coach", workshop: "Workshop", playbook: "Playbook",
   interventions: "Interventions", reports: "Scheduled Prompts",
 };
 

@@ -4,6 +4,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import AlertBell from "@/components/layout/AlertBell";
 import BottomNav from "@/components/layout/BottomNav";
 import CoachTab from "@/components/coach/CoachTab";
+import WorkshopTab from "@/components/workshop/WorkshopTab";
 import InterventionsTab from "@/components/tabs/InterventionsTab";
 import PlaybookTab from "@/components/tabs/PlaybookTab";
 import ReportsTab from "@/components/tabs/ReportsTab";
@@ -38,6 +39,7 @@ export default function App() {
   const renderTab = () => {
     switch (tab) {
       case "coach": return <CoachTab />;
+      case "workshop": return <WorkshopTab />;
       case "playbook": return <PlaybookTab onAddIntervention={handleAddIntervention} />;
       case "interventions": return <InterventionsTab interventions={interventions} onAddIntervention={handleAddIntervention} onDeleteIntervention={handleDeleteIntervention} />;
       case "reports": return <ReportsTab />;
