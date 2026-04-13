@@ -96,6 +96,21 @@ export default function Bubble({ msg, selected, onSelect }) {
         {msg.sprintPlan && SprintPlanCard && <SprintPlanCard data={msg.sprintPlan} />}
         {msg.crewBriefing && CrewBriefingCard && <CrewBriefingCard data={msg.crewBriefing} />}
         {msg.playbookActions && <PlaybookActionsRenderer actions={msg.playbookActions} />}
+        {msg.pdfRef && (
+          <a href={msg.pdfRef.url} target="_blank" rel="noopener noreferrer"
+            className="mt-3 flex items-center gap-3 bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3 hover:border-[#FFE066] hover:bg-[#FFFDF5] transition-colors group/pdf">
+            <div className="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center flex-shrink-0 border border-rose-200">
+              <span className="text-sm font-bold text-rose-600">PDF</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-slate-700 group-hover/pdf:text-[#1a1a1a] truncate">{msg.pdfRef.title}</p>
+              <p className="text-xs text-slate-400">{msg.pdfRef.size} {"\u00B7"} Click to open</p>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300 group-hover/pdf:text-[#FFCC00] flex-shrink-0">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+          </a>
+        )}
       </div>
     </div>
   );

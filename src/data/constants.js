@@ -552,15 +552,20 @@ I'd recommend focusing coaching efforts on Phoenix. The issues are compounding \
   {
     user: "Are there any playbooks that could help with this?",
     agent: {
-      text: `Yes, there are a couple of approaches in the playbook library that would be relevant here.
+      text: `Yes, there are a couple of well-established approaches in the playbook library that are directly relevant to what Phoenix is experiencing. I'd recommend looking at both of these.
 
-The first one is called "Hard WIP Cap with Completion Gate." The basic idea is to introduce a strict rule that no new work can be pulled into active development until an existing item is completed. This directly addresses the root cause \u2014 Phoenix's WIP is 50% over limit, and capping it would force the team to finish work before starting new work. It's a straightforward intervention that can be agreed in a single standup conversation and enforced through Jira column constraints.
+The first is called "Hard WIP Cap with Completion Gate." This is the highest-leverage intervention available for Phoenix's situation because it targets the root cause \u2014 the team is running 50% over their WIP limit, and everything else (slow flow, low efficiency, review bottlenecks) cascades from that.
 
-The second one is the "Daily Blocker Escalation Ritual." This one targets the aged items problem. The idea is to add a specific step to the daily standup where any item that hasn't had a status change in 5 or more days gets automatically surfaced, an owner is assigned to resolve the blocker within 24 hours, and if it's not resolved in 48 hours it escalates to the engineering manager.
+The way it works is straightforward: you introduce a strict rule that no new work item can be pulled into the active column until an existing item reaches "Done." This forces the team to focus on finishing work rather than starting new work, which is the behavioural shift that breaks the overload cycle. In practice, you'd agree the limit with the squad in a standup conversation (the standard formula is team size \u00F7 2, rounded up), configure Jira column constraints to enforce it programmatically, and then in the next sprint planning session, remove items from the sprint backlog until you're at or below the cap. The key is consistency \u2014 the limit needs to be respected every sprint, not just when things feel busy. Teams that enforce this consistently typically see a 25\u201340% reduction in median flow time within two sprints, because items stop competing for attention at handoff points and start flowing through the system smoothly.
 
-I'd suggest implementing the WIP cap first since it addresses the root cause, and then introducing the blocker ritual in the following sprint so the team isn't overwhelmed with process changes.
+The second is the "Daily Blocker Escalation Ritual." This one targets the aged items problem specifically \u2014 Phoenix has three items that have been sitting in the system for 15, 21, and 28 days respectively without being flagged as blocked. That's a common pattern: items stall because they're waiting on a dependency, a decision, or a piece of information, but nobody formally flags them as blocked so they sit silently consuming WIP capacity.
 
-You can find both of these in the Playbook tab if you'd like to review the full details and implementation steps. From there you can create a tracked intervention to monitor whether the changes are having the desired impact on the metrics.`,
+The ritual adds a structured step to the daily standup. It takes about three minutes. First, any item with no status change in the last five days is automatically surfaced \u2014 the team doesn't have to remember to mention it, it's on the agenda. Second, for each surfaced item, someone asks "what is this waiting for?" and an owner is assigned to resolve the blocker within 24 hours. Third, if the blocker isn't resolved within 48 hours, it automatically escalates to the Engineering Manager. This creates accountability and a forcing function that prevents items from silently ageing. Teams that implement this consistently report that the number of items exceeding the 14-day threshold drops by 60\u201380% within a single sprint, because blockers get surfaced and resolved before they become chronic.
+
+I'd recommend implementing the WIP cap first since it addresses the root cause, and then introducing the blocker ritual in the following sprint so the team isn't overwhelmed with process changes all at once.
+
+You can find both of these in the Playbook tab if you'd like to review the full implementation steps. From there you can create a tracked intervention to monitor whether the changes are having the desired impact on the metrics.`,
+      pdfRef: { url: "/docs/flow-metrics-coaching-guide.pdf", title: "Flow Metrics Coaching Guide \u2014 WIP Management & Blocker Escalation", size: "8 KB" },
       intent: "recommendation",
       chips: ["Flow efficiency trend", "WIP load", "Work type breakdown", "Ageing items", "Give me coaching recs", "OKR status", "What-if simulator"],
     },
