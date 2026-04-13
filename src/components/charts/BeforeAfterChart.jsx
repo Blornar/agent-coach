@@ -19,7 +19,7 @@ export default function BeforeAfterChart({ chartData, startSprint, unit, metricL
         <ReferenceArea x1={startSprint} x2={lastSprint} fill="#FFF9E0" fillOpacity={0.6} />
         <XAxis dataKey="sprint" tick={{ fontSize: 11, fill: "#94a3b8" }} />
         <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} />
-        <Tooltip contentStyle={tt} formatter={(v) => [`${v}${unit}`, metricLabel]} />
+        <Tooltip contentStyle={tt} labelStyle={{ color: "#f8fafc", fontWeight: 600, marginBottom: 2 }} itemStyle={{ color: "#94a3b8" }} formatter={(v) => [`${v}${unit}`, metricLabel]} />
         <ReferenceLine
           x={startSprint}
           stroke={C.cbaYellow}
