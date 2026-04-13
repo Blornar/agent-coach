@@ -18,21 +18,21 @@ export const SQUAD_METRICS = {
   phoenix: {
     flowTime: [
       { sprint: "S18", median: 3.2, p85: 6.1  },
-      { sprint: "S19", median: 3.5, p85: 6.8  },
-      { sprint: "S20", median: 4.1, p85: 8.2  },
-      { sprint: "S21", median: 5.2, p85: 9.8  },
-      { sprint: "S22", median: 5.8, p85: 11.2 },
-      { sprint: "S23", median: 6.4, p85: 12.1 },
+      { sprint: "S19", median: 3.8, p85: 7.2  },
+      { sprint: "S20", median: 4.6, p85: 8.8  },
+      { sprint: "S21", median: 4.2, p85: 7.9  },
+      { sprint: "S22", median: 3.6, p85: 6.8  },
+      { sprint: "S23", median: 3.1, p85: 5.8  },
     ],
     velocity: [
-      { sprint: "S18", value: 18 }, { sprint: "S19", value: 17 },
-      { sprint: "S20", value: 18 }, { sprint: "S21", value: 15 },
-      { sprint: "S22", value: 12 }, { sprint: "S23", value: 10 },
+      { sprint: "S18", value: 18 }, { sprint: "S19", value: 16 },
+      { sprint: "S20", value: 13 }, { sprint: "S21", value: 15 },
+      { sprint: "S22", value: 18 }, { sprint: "S23", value: 20 },
     ],
     efficiency: [
-      { sprint: "S18", efficiency: 68 }, { sprint: "S19", efficiency: 65 },
-      { sprint: "S20", efficiency: 58 }, { sprint: "S21", efficiency: 47 },
-      { sprint: "S22", efficiency: 38 }, { sprint: "S23", efficiency: 31 },
+      { sprint: "S18", efficiency: 68 }, { sprint: "S19", efficiency: 60 },
+      { sprint: "S20", efficiency: 48 }, { sprint: "S21", efficiency: 52 },
+      { sprint: "S22", efficiency: 59 }, { sprint: "S23", efficiency: 64 },
     ],
     distribution: [
       { name: "Features",  value: 32, color: C.navy  },
@@ -241,7 +241,7 @@ export const ALERTS_DATA = [
 ];
 
 export const SQUAD_HEALTH = [
-  { id: "phoenix", squad: "Squad Phoenix", crew: "Checkout Crew", flowTime: 6.4, velocity: 10, efficiency: 31, wip: 9, wipLimit: 6, health: 2, healthNote: "Team reported feeling overwhelmed in last retro. Three members flagged unclear priorities." },
+  { id: "phoenix", squad: "Squad Phoenix", crew: "Checkout Crew", flowTime: 3.1, velocity: 20, efficiency: 64, wip: 5, wipLimit: 6, health: 4, healthNote: "Strong improvement since WIP cap intervention in S21. Team morale is up, flow time halved. Pair programming helping with review bottlenecks." },
   { id: "orion",   squad: "Squad Orion",   crew: "Checkout Crew", flowTime: 3.1, velocity: 21, efficiency: 62, wip: 5, wipLimit: 6, health: 4, healthNote: "Good momentum since pair programming. Team confident about sprint goal." },
   { id: "nexus",   squad: "Squad Nexus",   crew: "Wallet Crew",   flowTime: 4.2, velocity: 16, efficiency: 54, wip: 6, wipLimit: 7, health: 4, healthNote: "Solid delivery culture. Minor dependency risk on Atlas for WAL-E005." },
   { id: "atlas",   squad: "Squad Atlas",   crew: "Wallet Crew",   flowTime: 3.8, velocity: 14, efficiency: 58, wip: 5, wipLimit: 6, health: 3, healthNote: "Two new joiners in ramp-up. Velocity suppressed but improving." },

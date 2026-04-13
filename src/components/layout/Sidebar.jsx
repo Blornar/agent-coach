@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { IcoZap, IcoDown, IcoRight, IcoChat, IcoPlus, IcoTrash } from "@/components/icons";
+import { IcoZap, IcoDown, IcoRight, IcoChat, IcoPlus, IcoTrash, IcoCheck, IcoX } from "@/components/icons";
 import { NAV } from "@/data/constants";
 import { useCoach } from "@/context/CoachContext";
 
@@ -11,7 +11,7 @@ const SCOPE_DOT = {
 };
 
 export default function Sidebar({ tab, setTab, open, onToggle }) {
-  const { projects, activeProject, activeChatId, createProject, createChat, selectChat, deleteChat } = useCoach();
+  const { projects, activeProject, activeChatId, createProject, renameProject, deleteProject, createChat, selectChat, deleteChat } = useCoach();
   const [projectOpen, setProjectOpen] = useState(() => {
     const map = {};
     projects.forEach(p => { map[p.id] = true; });
@@ -19,6 +19,8 @@ export default function Sidebar({ tab, setTab, open, onToggle }) {
   });
   const [addingProject, setAddingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
+  const [renamingProjectId, setRenamingProjectId] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
 
   const toggleProject = (id) => setProjectOpen(o => ({ ...o, [id]: !o[id] }));
 
@@ -38,6 +40,24 @@ export default function Sidebar({ tab, setTab, open, onToggle }) {
     setProjectOpen(o => ({ ...o, [id]: true }));
     setAddingProject(false);
     setNewProjectName("");
+  };
+
+  const startRename = (project) => {
+    setRenamingProjectId(project.id);
+    setRenameValue(project.name);
+  };
+
+  const commitRename = () => {
+    if (renamingProjectId && renameValue.trim()) {
+      renameProject(renamingProjectId, renameValue.trim());
+    }
+    setRenamingProjectId(null);
+    setRenameValue("");
+  };
+
+  const cancelRename = () => {
+    setRenamingProjectId(null);
+    setRenameValue("");
   };
 
   if (!open) {
@@ -116,12 +136,46 @@ export default function Sidebar({ tab, setTab, open, onToggle }) {
         {projects.map(project => (
           <div key={project.id} className="mb-1">
             {/* Project header */}
-            <div className="flex items-center">
+            <div className="group flex items-center">
               <button onClick={() => toggleProject(project.id)}
-                className="flex items-center gap-1 px-2 py-1.5 text-xs text-neutral-400 hover:text-neutral-200 transition-colors">
+                className="flex items-center gap-1 px-2 py-1.5 text-xs text-neutral-400 hover:text-neutral-200 transition-colors flex-shrink-0">
                 {projectOpen[project.id] ? <IcoDown size={11} /> : <IcoRight size={11} />}
               </button>
-              <span className="text-xs font-medium text-neutral-400 flex-1 truncate">{project.name}</span>
+
+              {renamingProjectId === project.id ? (
+                <div className="flex-1 flex items-center gap-1 min-w-0">
+                  <input
+                    autoFocus
+                    value={renameValue}
+                    onChange={e => setRenameValue(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") cancelRename(); }}
+                    className="flex-1 text-xs bg-[#2d2d2d] text-white border border-neutral-600 rounded px-1.5 py-0.5 outline-none focus:border-[#FFCC00] min-w-0"
+                  />
+                  <button onClick={commitRename} className="text-emerald-400 hover:text-emerald-300 flex-shrink-0" title="Save">
+                    <IcoCheck size={10} />
+                  </button>
+                  <button onClick={cancelRename} className="text-neutral-500 hover:text-neutral-300 flex-shrink-0" title="Cancel">
+                    <IcoX size={10} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <button onClick={() => startRename(project)}
+                    className="text-xs font-medium text-neutral-400 flex-1 truncate text-left hover:text-neutral-200 transition-colors"
+                    title="Double-click to rename"
+                  >
+                    {project.name}
+                  </button>
+                  <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 flex-shrink-0 transition-opacity">
+                    <button onClick={() => deleteProject(project.id)}
+                      className="p-1 text-neutral-700 hover:text-rose-400 transition-colors"
+                      title="Delete project"
+                    >
+                      <IcoTrash size={10} />
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Chats within project */}
@@ -131,7 +185,7 @@ export default function Sidebar({ tab, setTab, open, onToggle }) {
                   <p className="px-3 py-1 text-xs text-neutral-700 italic">No chats yet</p>
                 )}
                 {project.chats.map(chat => (
-                  <div key={chat.id} className="group flex items-center">
+                  <div key={chat.id} className="group/chat flex items-center">
                     <button
                       onClick={() => handleChatClick(chat.id)}
                       className={`flex-1 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-colors text-left truncate ${
@@ -145,7 +199,7 @@ export default function Sidebar({ tab, setTab, open, onToggle }) {
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); deleteChat(chat.id); }}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-neutral-700 hover:text-rose-400 transition-all flex-shrink-0"
+                      className="opacity-0 group-hover/chat:opacity-100 p-1 text-neutral-700 hover:text-rose-400 transition-all flex-shrink-0"
                       title="Delete chat"
                     >
                       <IcoTrash size={10} />

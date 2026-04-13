@@ -101,6 +101,21 @@ export function CoachProvider({ alerts, interventions, addIntervention, setTab, 
     return id;
   }, []);
 
+  const renameProject = useCallback((projectId, name) => {
+    setProjects(prev => prev.map(p => p.id === projectId ? { ...p, name } : p));
+  }, []);
+
+  const deleteProject = useCallback((projectId) => {
+    setProjects(prev => prev.filter(p => p.id !== projectId));
+    if (activeProjectId === projectId) {
+      setActiveProjectId(prev => {
+        const remaining = projects.filter(p => p.id !== projectId);
+        return remaining[0]?.id || null;
+      });
+      setActiveChatId(null);
+    }
+  }, [activeProjectId, projects]);
+
   /* ── Chat CRUD ────────────────────────────────────── */
   const createChat = useCallback((projectId, scopeType = "squad", scopeId = "phoenix", title = "") => {
     const id = nextChatId();
@@ -165,13 +180,13 @@ export function CoachProvider({ alerts, interventions, addIntervention, setTab, 
     scope, setScope, squadData, healthData,
     /* Projects & chats */
     projects, activeProject, activeChat, activeChatId,
-    createProject, createChat, selectChat, deleteChat,
+    createProject, renameProject, deleteProject, createChat, selectChat, deleteChat,
     updateChatMessages, updateChatTitle, updateChatScope,
     /* App state */
     alerts, interventions, addIntervention, setTab,
     /* Legacy compat — still used by CoachTab for conversation persistence */
     conversations: new Map(), setConversations: () => {},
-  }), [scope, setScope, squadData, healthData, projects, activeProject, activeChat, activeChatId, createProject, createChat, selectChat, deleteChat, updateChatMessages, updateChatTitle, updateChatScope, alerts, interventions, addIntervention, setTab]);
+  }), [scope, setScope, squadData, healthData, projects, activeProject, activeChat, activeChatId, createProject, renameProject, deleteProject, createChat, selectChat, deleteChat, updateChatMessages, updateChatTitle, updateChatScope, alerts, interventions, addIntervention, setTab]);
 
   return <CoachContext.Provider value={value}>{children}</CoachContext.Provider>;
 }
