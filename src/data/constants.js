@@ -503,3 +503,66 @@ If you'd like to adopt either play, click "Use this play" to create a tracked in
     },
   },
 ];
+
+/* ── Basic demo script (low-budget / constrained version) ─ */
+
+export const DEMO_SCRIPT_BASIC = [
+  {
+    user: "Tell me everything about the Checkout Crew",
+    agent: {
+      text: `Checkout Crew is made up of two squads \u2014 Squad Phoenix and Squad Orion. They own the checkout conversion pipeline and are currently working on three epics across two OKRs.
+
+Overall, the crew is in a mixed state. I've pulled the flow time trend for the crew below which gives you a sense of the trajectory. The crew median has been climbing over the last six sprints, moving from around 3.5 days up to about 4.8 days. That's above the healthy threshold of 4 days and it's been heading in the wrong direction fairly consistently.
+
+Velocity across the crew has dropped from roughly 40 items per sprint down to about 31. That's a meaningful decline. The bug ratio is also elevated at around 30% of completed work being unplanned fixes, which is about double what you'd want to see in a healthy squad.
+
+On the epic side, two out of three are flagged as at risk. PAY-E001 (Payment Failure Remediation) is only 34% complete and the forecast has it landing about two weeks late. PAY-E003 (Abandonment Analytics) is at just 12%. The one bright spot is PAY-E002 (One-Click Checkout) which is on track at 72%, owned by Squad Orion.
+
+The main concern is that most of the crew-level problems seem to trace back to one squad in particular. I'd suggest digging into the flow time drivers to understand where the bottleneck is.`,
+      intent: "flowTime",
+      chart: "flowTime",
+      chartProps: { data: CREW_METRICS.checkout.flowTime, squadName: "Checkout Crew" },
+      chips: ["Flow efficiency trend", "WIP load", "Work type breakdown", "Ageing items", "Give me coaching recs", "OKR status", "What-if simulator"],
+    },
+  },
+  {
+    user: "Flow time looks concerning. What are the primary contributors to this issue, and which squads in this crew need the most help?",
+    agent: {
+      text: `The flow time issue is almost entirely driven by Squad Phoenix. If you look at the two squads side by side, the picture is quite stark.
+
+Squad Phoenix is currently sitting at a 6.4 day median flow time with a p85 of 12.1 days. That means the slowest 15% of their items are taking nearly two weeks to get through the system. By contrast, Squad Orion is at 3.1 days median and 5.4 days p85 \u2014 well within healthy range and actually improving.
+
+So this isn't a crew-wide problem. It's a Phoenix-specific problem that's pulling the crew average up.
+
+There are a few things contributing to this. Phoenix is running 9 active items against a WIP limit of 6, which is 50% over capacity. That's significant because Little's Law tells us flow time is directly proportional to WIP \u2014 so more items in flight means everything takes longer. Their flow efficiency has also dropped to 31%, which means items are spending about 70% of their time waiting in queues rather than being actively worked on.
+
+The bug ratio is another factor. About 41% of Phoenix's completed work has been bug fixes, which is well above the healthy range of 15-20%. That's a lot of unplanned reactive work that disrupts sprint planning and fragments focus.
+
+They also have three items that have been sitting in the system for more than 14 days \u2014 PAY-261 at 15 days, PAY-243 at 21 days, and PAY-230 at 28 days. These are likely blocked but haven't been flagged as such, so they're consuming WIP slots without producing any output.
+
+Squad Orion doesn't need attention right now. Their metrics are solid across the board and they seem to have good momentum.
+
+I'd recommend focusing coaching efforts on Phoenix. The issues are compounding \u2014 high WIP leads to longer queues, which leads to lower efficiency, which makes everything slower, which creates pressure to start more work, which increases WIP further. Breaking that cycle is the priority.`,
+      intent: "flowTime",
+      chart: "flowTime",
+      chartProps: { data: SQUAD_METRICS.phoenix.flowTime, squadName: "Squad Phoenix" },
+      chips: ["Flow efficiency trend", "WIP load", "Work type breakdown", "Ageing items", "Give me coaching recs", "OKR status", "What-if simulator"],
+    },
+  },
+  {
+    user: "Are there any playbooks that could help with this?",
+    agent: {
+      text: `Yes, there are a couple of approaches in the playbook library that would be relevant here.
+
+The first one is called "Hard WIP Cap with Completion Gate." The basic idea is to introduce a strict rule that no new work can be pulled into active development until an existing item is completed. This directly addresses the root cause \u2014 Phoenix's WIP is 50% over limit, and capping it would force the team to finish work before starting new work. It's a straightforward intervention that can be agreed in a single standup conversation and enforced through Jira column constraints.
+
+The second one is the "Daily Blocker Escalation Ritual." This one targets the aged items problem. The idea is to add a specific step to the daily standup where any item that hasn't had a status change in 5 or more days gets automatically surfaced, an owner is assigned to resolve the blocker within 24 hours, and if it's not resolved in 48 hours it escalates to the engineering manager.
+
+I'd suggest implementing the WIP cap first since it addresses the root cause, and then introducing the blocker ritual in the following sprint so the team isn't overwhelmed with process changes.
+
+You can find both of these in the Playbook tab if you'd like to review the full details and implementation steps. From there you can create a tracked intervention to monitor whether the changes are having the desired impact on the metrics.`,
+      intent: "recommendation",
+      chips: ["Flow efficiency trend", "WIP load", "Work type breakdown", "Ageing items", "Give me coaching recs", "OKR status", "What-if simulator"],
+    },
+  },
+];

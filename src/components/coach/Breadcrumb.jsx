@@ -2,7 +2,7 @@
 import { useCoach } from "@/context/CoachContext";
 import { IcoActivity, IcoRight, IcoPlus, IcoPlay } from "@/components/icons";
 
-export default function Breadcrumb({ onNewChat, onDemo, demoMode }) {
+export default function Breadcrumb({ onNewChat, onDemo, onDemoBasic, demoMode }) {
   const { activeProject, activeChat } = useCoach();
 
   const projectName = activeProject?.name || "No project";
@@ -16,13 +16,22 @@ export default function Breadcrumb({ onNewChat, onDemo, demoMode }) {
       <span className="font-medium text-neutral-600 flex-shrink-0 truncate max-w-[200px]">{chatTitle}</span>
       <div className="ml-auto flex items-center gap-2 flex-shrink-0">
         {!demoMode && (
-          <button
-            onClick={onDemo}
-            className="flex items-center gap-1 text-xs font-medium text-neutral-500 hover:text-[#1a1a1a] bg-white border border-neutral-200 hover:border-[#FFE066] hover:bg-[#FFF4CC] px-2.5 py-1 rounded-lg transition-colors"
-          >
-            <IcoPlay size={10} />
-            Demo
-          </button>
+          <>
+            <button
+              onClick={onDemo}
+              className="flex items-center gap-1 text-xs font-medium text-neutral-500 hover:text-[#1a1a1a] bg-white border border-neutral-200 hover:border-[#FFE066] hover:bg-[#FFF4CC] px-2.5 py-1 rounded-lg transition-colors"
+            >
+              <IcoPlay size={10} />
+              Demo
+            </button>
+            <button
+              onClick={onDemoBasic}
+              className="flex items-center gap-1 text-xs font-medium text-neutral-500 hover:text-[#1a1a1a] bg-white border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 px-2.5 py-1 rounded-lg transition-colors"
+            >
+              <IcoPlay size={10} />
+              Demo (Basic)
+            </button>
+          </>
         )}
         <button
           onClick={onNewChat}

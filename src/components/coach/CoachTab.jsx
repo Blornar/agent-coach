@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { IcoSend, IcoCheck, IcoRight, IcoX } from "@/components/icons";
-import { CHIPS, SQUAD_HEALTH, OKRS, EPICS, PLAYBOOK, DEMO_SCRIPT } from "@/data/constants";
+import { CHIPS, SQUAD_HEALTH, OKRS, EPICS, PLAYBOOK, DEMO_SCRIPT, DEMO_SCRIPT_BASIC } from "@/data/constants";
 import { uid } from "@/data/helpers";
 import { respond } from "@/data/respond";
 import { useCoach } from "@/context/CoachContext";
@@ -30,6 +30,7 @@ export default function CoachTab() {
   /* ── Demo mode ──────────────────────────────────────── */
   const [demoMode, setDemoMode]     = useState(false);
   const [demoStep, setDemoStep]     = useState(0);
+  const demoScriptRef = useRef(DEMO_SCRIPT);
 
   const bottom = useRef(null);
   const prevChatId = useRef(activeChatId);
@@ -73,9 +74,10 @@ export default function CoachTab() {
   }, [activeProject, createChat]);
 
   /* ── Demo logic ─────────────────────────────────────── */
-  const handleStartDemo = useCallback(() => {
+  const launchDemo = useCallback((script, title) => {
     if (!activeProject) return;
-    const chatId = createChat(activeProject.id, "crew", "checkout", "Demo: Checkout Crew Briefing");
+    demoScriptRef.current = script;
+    createChat(activeProject.id, "crew", "checkout", title);
     setMsgs([]);
     setDemoMode(true);
     setDemoStep(0);
@@ -83,7 +85,7 @@ export default function CoachTab() {
     setShowWhatIf(false);
     setBusy(true);
     setTimeout(() => {
-      const turn = DEMO_SCRIPT[0];
+      const turn = script[0];
       if (!turn) return;
       const userMsg = { id: uid(), role: "user", text: turn.user };
       setMsgs([userMsg]);
@@ -97,9 +99,13 @@ export default function CoachTab() {
     }, 400);
   }, [activeProject, createChat]);
 
+  const handleStartDemo = useCallback(() => launchDemo(DEMO_SCRIPT, "Demo: Full Experience"), [launchDemo]);
+  const handleStartDemoBasic = useCallback(() => launchDemo(DEMO_SCRIPT_BASIC, "Demo: Basic Experience"), [launchDemo]);
+
   const handleDemoNext = useCallback(() => {
-    if (!demoMode || demoStep >= DEMO_SCRIPT.length) return;
-    const turn = DEMO_SCRIPT[demoStep];
+    const script = demoScriptRef.current;
+    if (!demoMode || demoStep >= script.length) return;
+    const turn = script[demoStep];
     if (!turn) { setDemoMode(false); return; }
     setBusy(true);
     const userMsg = { id: uid(), role: "user", text: turn.user };
@@ -200,12 +206,12 @@ export default function CoachTab() {
     setSelected(new Set());
   };
 
-  const demoFinished = demoMode && demoStep >= DEMO_SCRIPT.length;
+  const demoFinished = demoMode && demoStep >= demoScriptRef.current.length;
   const showEmptyState = !activeChatId && msgs.length === 0 && !demoMode;
 
   return (
     <div className="flex flex-col h-full">
-      <Breadcrumb onNewChat={handleNewChat} onDemo={handleStartDemo} demoMode={demoMode} />
+      <Breadcrumb onNewChat={handleNewChat} onDemo={handleStartDemo} onDemoBasic={handleStartDemoBasic} demoMode={demoMode} />
 
       <div className="flex-1 overflow-y-auto px-5 pt-5 pb-2 bg-neutral-50/50">
         {showEmptyState && (
