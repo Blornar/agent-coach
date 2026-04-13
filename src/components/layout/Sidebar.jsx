@@ -1,26 +1,43 @@
 "use client";
 import { useState } from "react";
-import { IcoZap, IcoDown, IcoRight, IcoUsers } from "@/components/icons";
-import { ORG, NAV } from "@/data/constants";
+import { IcoZap, IcoDown, IcoRight, IcoChat, IcoPlus, IcoTrash } from "@/components/icons";
+import { NAV } from "@/data/constants";
+import { useCoach } from "@/context/CoachContext";
 
-export default function Sidebar({ tab, setTab, squad, setSquad, onScopeChange, open, onToggle }) {
-  const [crewOpen, setCrewOpen] = useState({ checkout: true, wallet: false });
-  const toggleCrew = (id) => setCrewOpen((o) => ({ ...o, [id]: !o[id] }));
+const SCOPE_DOT = {
+  squad: "bg-[#FFCC00]",
+  crew: "bg-emerald-400",
+  org: "bg-sky-400",
+};
 
-  const handleSquadClick = (sqId) => {
-    setSquad(sqId);
-    onScopeChange?.("squad", sqId);
+export default function Sidebar({ tab, setTab, open, onToggle }) {
+  const { projects, activeProject, activeChatId, createProject, createChat, selectChat, deleteChat } = useCoach();
+  const [projectOpen, setProjectOpen] = useState(() => {
+    const map = {};
+    projects.forEach(p => { map[p.id] = true; });
+    return map;
+  });
+  const [addingProject, setAddingProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+
+  const toggleProject = (id) => setProjectOpen(o => ({ ...o, [id]: !o[id] }));
+
+  const handleChatClick = (chatId) => {
+    selectChat(chatId);
     if (tab !== "coach") setTab("coach");
   };
 
-  const handleCrewClick = (crewId) => {
-    onScopeChange?.("crew", crewId);
+  const handleNewChat = (projectId) => {
+    createChat(projectId);
     if (tab !== "coach") setTab("coach");
   };
 
-  const handleOrgClick = () => {
-    onScopeChange?.("org", "org");
-    if (tab !== "coach") setTab("coach");
+  const handleCreateProject = () => {
+    if (!newProjectName.trim()) return;
+    const id = createProject(newProjectName.trim());
+    setProjectOpen(o => ({ ...o, [id]: true }));
+    setAddingProject(false);
+    setNewProjectName("");
   };
 
   if (!open) {
@@ -47,6 +64,7 @@ export default function Sidebar({ tab, setTab, squad, setSquad, onScopeChange, o
 
   return (
     <div className="hidden md:flex w-56 flex-shrink-0 bg-[#1a1a1a] flex-col h-full transition-all duration-200">
+      {/* Logo */}
       <div className="px-4 py-4 border-b border-[#2d2d2d]">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-[#FFCC00] flex items-center justify-center shadow">
@@ -59,6 +77,7 @@ export default function Sidebar({ tab, setTab, squad, setSquad, onScopeChange, o
         </div>
       </div>
 
+      {/* Nav tabs */}
       <div className="px-2 py-3 border-b border-[#2d2d2d] space-y-0.5">
         {NAV.map(({ id, Icon, label, badge }) => (
           <button key={id} onClick={() => setTab(id)}
@@ -70,38 +89,84 @@ export default function Sidebar({ tab, setTab, squad, setSquad, onScopeChange, o
         ))}
       </div>
 
+      {/* Projects & Chats */}
       <div className="flex-1 overflow-y-auto px-2 py-3">
-        <button onClick={handleOrgClick} className="w-full px-3 mb-2 text-xs font-semibold text-neutral-600 uppercase tracking-wide text-left hover:text-neutral-300 transition-colors">
-          {ORG.name}
-        </button>
-        {ORG.crews.map((crew) => (
-          <div key={crew.id} className="mb-1">
+        <div className="flex items-center justify-between px-3 mb-2">
+          <p className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Projects</p>
+          <button onClick={() => setAddingProject(true)} className="text-neutral-600 hover:text-neutral-300 transition-colors" title="New project">
+            <IcoPlus size={11} />
+          </button>
+        </div>
+
+        {/* New project input */}
+        {addingProject && (
+          <div className="px-3 mb-2">
+            <input
+              autoFocus
+              value={newProjectName}
+              onChange={e => setNewProjectName(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") handleCreateProject(); if (e.key === "Escape") { setAddingProject(false); setNewProjectName(""); } }}
+              onBlur={() => { if (!newProjectName.trim()) { setAddingProject(false); setNewProjectName(""); } }}
+              placeholder="Project name..."
+              className="w-full text-xs bg-[#2d2d2d] text-white border border-neutral-600 rounded-lg px-2.5 py-1.5 outline-none focus:border-[#FFCC00] placeholder-neutral-500"
+            />
+          </div>
+        )}
+
+        {projects.map(project => (
+          <div key={project.id} className="mb-1">
+            {/* Project header */}
             <div className="flex items-center">
-              <button onClick={() => toggleCrew(crew.id)}
+              <button onClick={() => toggleProject(project.id)}
                 className="flex items-center gap-1 px-2 py-1.5 text-xs text-neutral-400 hover:text-neutral-200 transition-colors">
-                {crewOpen[crew.id] ? <IcoDown size={11} /> : <IcoRight size={11} />}
+                {projectOpen[project.id] ? <IcoDown size={11} /> : <IcoRight size={11} />}
               </button>
-              <button onClick={() => handleCrewClick(crew.id)}
-                className="flex items-center gap-2 px-1 py-1.5 text-xs font-medium text-neutral-400 hover:text-neutral-200 hover:bg-[#2d2d2d] rounded-lg transition-colors flex-1 text-left">
-                <IcoUsers size={11} />
-                <span>{crew.name}</span>
-              </button>
+              <span className="text-xs font-medium text-neutral-400 flex-1 truncate">{project.name}</span>
             </div>
-            {crewOpen[crew.id] && (
-              <div className="ml-5 mt-0.5 space-y-0.5">
-                {crew.squads.map((sq) => (
-                  <button key={sq.id} onClick={() => handleSquadClick(sq.id)}
-                    className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-colors ${squad === sq.id ? "bg-[#2d2d2d] text-white" : "text-neutral-500 hover:text-neutral-300 hover:bg-[#2d2d2d]"}`}>
-                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${sq.id === "phoenix" ? "bg-[#FFCC00]" : "bg-emerald-400"}`} />
-                    {sq.name}
-                  </button>
+
+            {/* Chats within project */}
+            {projectOpen[project.id] && (
+              <div className="ml-4 mt-0.5 space-y-0.5">
+                {project.chats.length === 0 && (
+                  <p className="px-3 py-1 text-xs text-neutral-700 italic">No chats yet</p>
+                )}
+                {project.chats.map(chat => (
+                  <div key={chat.id} className="group flex items-center">
+                    <button
+                      onClick={() => handleChatClick(chat.id)}
+                      className={`flex-1 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-colors text-left truncate ${
+                        activeChatId === chat.id
+                          ? "bg-[#2d2d2d] text-white"
+                          : "text-neutral-500 hover:text-neutral-300 hover:bg-[#2d2d2d]"
+                      }`}
+                    >
+                      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${SCOPE_DOT[chat.scopeType] || SCOPE_DOT.squad}`} />
+                      <span className="truncate">{chat.title || "New chat"}</span>
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteChat(chat.id); }}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-neutral-700 hover:text-rose-400 transition-all flex-shrink-0"
+                      title="Delete chat"
+                    >
+                      <IcoTrash size={10} />
+                    </button>
+                  </div>
                 ))}
+                {/* New chat button within project */}
+                <button
+                  onClick={() => handleNewChat(project.id)}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-600 hover:text-neutral-300 hover:bg-[#2d2d2d] rounded-lg transition-colors"
+                >
+                  <IcoPlus size={9} />
+                  <span>New chat</span>
+                </button>
               </div>
             )}
           </div>
         ))}
       </div>
 
+      {/* User info */}
       <div className="px-4 py-3 border-t border-[#2d2d2d]">
         <p className="text-xs text-neutral-500 font-medium">James</p>
         <p className="text-xs text-neutral-700 mt-0.5">Last sync: 2 min ago {"\u00B7"} Enterprise</p>

@@ -16,10 +16,8 @@ let _intId = 300;
 export default function App() {
   const [tab, setTab] = useState("coach");
   const [alerts, setAlerts] = useState(ALERTS_DATA);
-  const [squad, setSquad] = useState("phoenix");
   const [interventions, setInterventions] = useState(INTERVENTIONS_SEED);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [scopeCmd, setScopeCmd] = useState(null);
 
   const handleAddIntervention = useCallback((newInt) => {
     setInterventions(prev => [...prev, { ...newInt, id: newInt.id || `int-${++_intId}` }]);
@@ -37,10 +35,6 @@ export default function App() {
     setAlerts(prev => prev.map(a => ({ ...a, read: true })));
   };
 
-  const handleScopeChange = useCallback((type, id) => {
-    setScopeCmd({ type, id, ts: Date.now() });
-  }, []);
-
   const renderTab = () => {
     switch (tab) {
       case "coach": return <CoachTab />;
@@ -53,13 +47,12 @@ export default function App() {
 
   return (
     <CoachProvider
-      squad={squad} setSquad={setSquad}
       alerts={alerts} interventions={interventions}
       addIntervention={handleAddIntervention}
-      setTab={setTab} scopeCmd={scopeCmd}
+      setTab={setTab}
     >
       <div className="flex h-screen bg-white overflow-hidden">
-        <Sidebar tab={tab} setTab={setTab} squad={squad} setSquad={setSquad} onScopeChange={handleScopeChange} open={sidebarOpen} onToggle={() => setSidebarOpen(o => !o)} />
+        <Sidebar tab={tab} setTab={setTab} open={sidebarOpen} onToggle={() => setSidebarOpen(o => !o)} />
         <div className="flex-1 flex flex-col min-w-0">
           <div className="hidden md:flex items-center px-3 py-2 border-b border-neutral-200 bg-white flex-shrink-0">
             <button

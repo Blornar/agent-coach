@@ -1,10 +1,10 @@
 "use client";
-import { createContext, useContext, useState, useCallback, useMemo, useEffect } from "react";
-import { ORG, SQUAD_HEALTH, SQUAD_METRICS, CREW_METRICS } from "@/data/constants";
+import { createContext, useContext, useState, useCallback, useMemo } from "react";
+import { ORG, SQUAD_HEALTH, SQUAD_METRICS, CREW_METRICS, PROJECTS_SEED } from "@/data/constants";
 
 const CoachContext = createContext(null);
 
-/* ── Scope resolution helpers ─────────────────────────── */
+/* ── Scope resolution (unchanged — still powers the response engine) ── */
 
 function resolveSquadInfo(squadId) {
   for (const crew of ORG.crews) {
@@ -18,7 +18,7 @@ function resolveCrewInfo(crewId) {
   return ORG.crews.find(c => c.id === crewId) || null;
 }
 
-function buildScope(type, id) {
+export function buildScope(type, id) {
   if (type === "squad") {
     const info = resolveSquadInfo(id);
     if (!info) return null;
@@ -38,7 +38,6 @@ function buildScope(type, id) {
       breadcrumb: [ORG.name, crew.name],
     };
   }
-  /* org */
   return {
     type: "org", id: "org", name: ORG.name,
     breadcrumb: [ORG.name],
@@ -48,7 +47,6 @@ function buildScope(type, id) {
 function resolveData(scope) {
   if (scope.type === "squad") return SQUAD_METRICS[scope.id] || null;
   if (scope.type === "crew")  return CREW_METRICS[scope.id] || null;
-  /* org-level: average of all crew metrics */
   const ck = Object.keys(CREW_METRICS);
   if (!ck.length) return null;
   const first = CREW_METRICS[ck[0]];
@@ -74,36 +72,106 @@ function resolveHealth(scope) {
   return SQUAD_HEALTH;
 }
 
+/* ── ID generator ─────────────────────────────────────── */
+let _chatId = 100;
+const nextChatId = () => `chat-${++_chatId}`;
+
 /* ── Provider ─────────────────────────────────────────── */
 
-export function CoachProvider({ squad, setSquad, alerts, interventions, addIntervention, setTab, scopeCmd, children }) {
-  const [scopeState, setScopeState] = useState(() => buildScope("squad", squad));
-  const [conversations, setConversations] = useState(() => new Map());
+const DEFAULT_SCOPE = buildScope("squad", "phoenix");
 
-  /* React to sidebar scope changes */
-  useEffect(() => {
-    if (scopeCmd) {
-      const next = buildScope(scopeCmd.type, scopeCmd.id);
-      if (next) setScopeState(next);
-    }
-  }, [scopeCmd]);
+export function CoachProvider({ alerts, interventions, addIntervention, setTab, children }) {
+  const [projects, setProjects]       = useState(PROJECTS_SEED);
+  const [activeProjectId, setActiveProjectId] = useState(PROJECTS_SEED[0]?.id || null);
+  const [activeChatId, setActiveChatId]       = useState(null);
 
-  const setScope = useCallback((type, id) => {
-    const next = buildScope(type, id);
-    if (!next) return;
-    setScopeState(next);
-    if (type === "squad") setSquad(id);
-  }, [setSquad]);
-
-  const scope = scopeState || buildScope("squad", squad);
+  /* Derived state */
+  const activeProject = projects.find(p => p.id === activeProjectId) || projects[0];
+  const activeChat = activeProject?.chats.find(c => c.id === activeChatId) || null;
+  const scope = activeChat ? buildScope(activeChat.scopeType, activeChat.scopeId) || DEFAULT_SCOPE : DEFAULT_SCOPE;
   const squadData = useMemo(() => resolveData(scope), [scope]);
   const healthData = useMemo(() => resolveHealth(scope), [scope]);
 
+  /* ── Project CRUD ─────────────────────────────────── */
+  const createProject = useCallback((name) => {
+    const id = `proj-${Date.now()}`;
+    setProjects(prev => [...prev, { id, name, chats: [] }]);
+    setActiveProjectId(id);
+    setActiveChatId(null);
+    return id;
+  }, []);
+
+  /* ── Chat CRUD ────────────────────────────────────── */
+  const createChat = useCallback((projectId, scopeType = "squad", scopeId = "phoenix", title = "") => {
+    const id = nextChatId();
+    const chat = { id, title, scopeType, scopeId, messages: [], createdAt: Date.now() };
+    setProjects(prev => prev.map(p =>
+      p.id === projectId ? { ...p, chats: [...p.chats, chat] } : p
+    ));
+    setActiveProjectId(projectId);
+    setActiveChatId(id);
+    return id;
+  }, []);
+
+  const selectChat = useCallback((chatId) => {
+    /* Find which project owns this chat */
+    for (const p of projects) {
+      if (p.chats.some(c => c.id === chatId)) {
+        setActiveProjectId(p.id);
+        setActiveChatId(chatId);
+        return;
+      }
+    }
+  }, [projects]);
+
+  const updateChatMessages = useCallback((chatId, messages) => {
+    setProjects(prev => prev.map(p => ({
+      ...p,
+      chats: p.chats.map(c => c.id === chatId ? { ...c, messages } : c),
+    })));
+  }, []);
+
+  const updateChatTitle = useCallback((chatId, title) => {
+    setProjects(prev => prev.map(p => ({
+      ...p,
+      chats: p.chats.map(c => c.id === chatId ? { ...c, title } : c),
+    })));
+  }, []);
+
+  const updateChatScope = useCallback((chatId, scopeType, scopeId) => {
+    setProjects(prev => prev.map(p => ({
+      ...p,
+      chats: p.chats.map(c => c.id === chatId ? { ...c, scopeType, scopeId } : c),
+    })));
+  }, []);
+
+  const deleteChat = useCallback((chatId) => {
+    setProjects(prev => prev.map(p => ({
+      ...p,
+      chats: p.chats.filter(c => c.id !== chatId),
+    })));
+    if (activeChatId === chatId) setActiveChatId(null);
+  }, [activeChatId]);
+
+  const setScope = useCallback((type, id) => {
+    /* Update the active chat's scope, or just store for later */
+    if (activeChatId) {
+      updateChatScope(activeChatId, type, id);
+    }
+  }, [activeChatId, updateChatScope]);
+
   const value = useMemo(() => ({
+    /* Scope & data */
     scope, setScope, squadData, healthData,
+    /* Projects & chats */
+    projects, activeProject, activeChat, activeChatId,
+    createProject, createChat, selectChat, deleteChat,
+    updateChatMessages, updateChatTitle, updateChatScope,
+    /* App state */
     alerts, interventions, addIntervention, setTab,
-    conversations, setConversations,
-  }), [scope, setScope, squadData, healthData, alerts, interventions, addIntervention, setTab, conversations]);
+    /* Legacy compat — still used by CoachTab for conversation persistence */
+    conversations: new Map(), setConversations: () => {},
+  }), [scope, setScope, squadData, healthData, projects, activeProject, activeChat, activeChatId, createProject, createChat, selectChat, deleteChat, updateChatMessages, updateChatTitle, updateChatScope, alerts, interventions, addIntervention, setTab]);
 
   return <CoachContext.Provider value={value}>{children}</CoachContext.Provider>;
 }

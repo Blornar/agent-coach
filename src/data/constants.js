@@ -398,6 +398,11 @@ export const SECTION_STYLE = {
   neutral: { dot: "bg-slate-400",   heading: "text-slate-600",   bg: "bg-slate-50",   border: "border-slate-200"   },
 };
 
+/* ── Projects seed ────────────────────────────────────── */
+export const PROJECTS_SEED = [
+  { id: "proj-1", name: "Q2 Delivery Coaching", chats: [] },
+];
+
 /* ── Demo conversation script ─────────────────────────── */
 
 /* Crew-level distribution (averaged Phoenix + Orion) */

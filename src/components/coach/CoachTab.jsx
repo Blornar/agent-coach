@@ -5,18 +5,21 @@ import { CHIPS, SQUAD_HEALTH, OKRS, EPICS, PLAYBOOK, DEMO_SCRIPT } from "@/data/
 import { uid } from "@/data/helpers";
 import { respond } from "@/data/respond";
 import { useCoach } from "@/context/CoachContext";
+import { buildScope } from "@/context/CoachContext";
 import Bubble from "./Bubble";
 import Typing from "./Typing";
 import WhatIfPanel from "./WhatIfPanel";
 import Breadcrumb from "./Breadcrumb";
 
 export default function CoachTab() {
-  const { scope, setScope, squadData, healthData, alerts, interventions, conversations, setConversations } = useCoach();
+  const {
+    scope, squadData, healthData, alerts, interventions,
+    activeProject, activeChat, activeChatId,
+    createChat, updateChatMessages, updateChatTitle, updateChatScope,
+  } = useCoach();
 
-  const scopeKey = `${scope.type}-${scope.id}`;
-  const savedMsgs = conversations.get(scopeKey);
-
-  const [msgs, setMsgs]             = useState(() => savedMsgs || []);
+  /* ── Local state synced to activeChat ────────────────── */
+  const [msgs, setMsgs]             = useState(activeChat?.messages || []);
   const [showWhatIf, setShowWhatIf] = useState(false);
   const [input, setInput]           = useState("");
   const [busy, setBusy]             = useState(false);
@@ -27,42 +30,39 @@ export default function CoachTab() {
   /* ── Demo mode ──────────────────────────────────────── */
   const [demoMode, setDemoMode]     = useState(false);
   const [demoStep, setDemoStep]     = useState(0);
-  const demoStarting = useRef(false);
 
   const bottom = useRef(null);
-  const prevScopeKey = useRef(scopeKey);
+  const prevChatId = useRef(activeChatId);
 
-  /* Save conversation when msgs change */
+  /* Sync local msgs to context when they change */
   useEffect(() => {
-    if (msgs.length) {
-      setConversations(prev => {
-        const next = new Map(prev);
-        next.set(scopeKey, msgs);
-        return next;
-      });
+    if (activeChatId && msgs.length) {
+      updateChatMessages(activeChatId, msgs);
     }
-  }, [msgs, scopeKey, setConversations]);
+  }, [msgs, activeChatId, updateChatMessages]);
 
-  /* Load conversation when scope changes (skip if demo is starting) */
+  /* Load messages when active chat changes */
   useEffect(() => {
-    if (scopeKey !== prevScopeKey.current) {
-      prevScopeKey.current = scopeKey;
-      if (demoStarting.current) {
-        demoStarting.current = false;
-        return;
-      }
-      const saved = conversations.get(scopeKey);
-      setMsgs(saved || []);
+    if (activeChatId !== prevChatId.current) {
+      prevChatId.current = activeChatId;
+      setMsgs(activeChat?.messages || []);
       setDynamicChips(CHIPS);
       setShowWhatIf(false);
       setSelectMode(false);
       setSelected(new Set());
-      setDemoMode(false);
-      setDemoStep(0);
+      if (!demoMode) {
+        setDemoMode(false);
+        setDemoStep(0);
+      }
     }
-  }, [scopeKey, conversations, scope, alerts]);
+  }, [activeChatId, activeChat, demoMode]);
 
+  useEffect(() => { bottom.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs, busy]);
+
+  /* ── New chat ───────────────────────────────────────── */
   const handleNewChat = useCallback(() => {
+    if (!activeProject) return;
+    createChat(activeProject.id);
     setMsgs([]);
     setDynamicChips(CHIPS);
     setShowWhatIf(false);
@@ -70,33 +70,23 @@ export default function CoachTab() {
     setSelected(new Set());
     setDemoMode(false);
     setDemoStep(0);
-    setConversations(prev => {
-      const next = new Map(prev);
-      next.delete(scopeKey);
-      return next;
-    });
-  }, [scopeKey, setConversations]);
-
-  useEffect(() => { bottom.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs, busy]);
+  }, [activeProject, createChat]);
 
   /* ── Demo logic ─────────────────────────────────────── */
   const handleStartDemo = useCallback(() => {
-    /* Switch to Checkout Crew context for the demo */
-    demoStarting.current = true;
-    setScope("crew", "checkout");
+    if (!activeProject) return;
+    const chatId = createChat(activeProject.id, "crew", "checkout", "Demo: Checkout Crew Briefing");
     setMsgs([]);
     setDemoMode(true);
     setDemoStep(0);
     setDynamicChips([]);
     setShowWhatIf(false);
-    /* Inject first turn after a brief delay */
     setBusy(true);
     setTimeout(() => {
       const turn = DEMO_SCRIPT[0];
       if (!turn) return;
       const userMsg = { id: uid(), role: "user", text: turn.user };
       setMsgs([userMsg]);
-      /* Then show typing, then agent response */
       setTimeout(() => {
         const agentMsg = { id: uid(), role: "ai", ...turn.agent };
         setMsgs(m => [...m, agentMsg]);
@@ -105,13 +95,12 @@ export default function CoachTab() {
         setBusy(false);
       }, 1200);
     }, 400);
-  }, [setScope]);
+  }, [activeProject, createChat]);
 
   const handleDemoNext = useCallback(() => {
     if (!demoMode || demoStep >= DEMO_SCRIPT.length) return;
     const turn = DEMO_SCRIPT[demoStep];
     if (!turn) { setDemoMode(false); return; }
-
     setBusy(true);
     const userMsg = { id: uid(), role: "user", text: turn.user };
     setMsgs(m => [...m, userMsg]);
@@ -141,10 +130,24 @@ export default function CoachTab() {
 
   const send = useCallback((text) => {
     if (!text.trim() || busy) return;
-    /* If in demo mode and user presses Enter with empty input, advance demo */
+
+    /* Auto-create a chat if none is active */
+    let chatId = activeChatId;
+    if (!chatId && activeProject) {
+      chatId = createChat(activeProject.id);
+    }
+
     setMsgs(m => [...m, { id: uid(), role: "user", text }]);
     setInput("");
     setBusy(true);
+
+    /* Auto-title the chat from the first user message */
+    const needsTitle = chatId && (!activeChat?.title || !activeChatId);
+    if (needsTitle) {
+      const title = text.length > 40 ? text.slice(0, 37) + "..." : text;
+      updateChatTitle(chatId, title);
+    }
+
     setTimeout(() => {
       const ctx = buildContext();
       ctx.history = [...ctx.history, { role: "user", text }];
@@ -154,7 +157,7 @@ export default function CoachTab() {
       if (result.chips) setDynamicChips(result.chips);
       setBusy(false);
     }, 900);
-  }, [busy, buildContext]);
+  }, [busy, buildContext, activeChatId, activeChat, activeProject, createChat, updateChatTitle]);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -168,11 +171,7 @@ export default function CoachTab() {
   };
 
   const handleChipClick = (c) => {
-    if (demoMode) {
-      /* In demo mode, chip clicks advance to next step */
-      handleDemoNext();
-      return;
-    }
+    if (demoMode) { handleDemoNext(); return; }
     if (c === "What-if simulator") { setShowWhatIf(true); return; }
     if (c === "Sprint planning help") { send("Help me plan the next sprint"); return; }
     send(c);
@@ -202,12 +201,22 @@ export default function CoachTab() {
   };
 
   const demoFinished = demoMode && demoStep >= DEMO_SCRIPT.length;
+  const showEmptyState = !activeChatId && msgs.length === 0 && !demoMode;
 
   return (
     <div className="flex flex-col h-full">
       <Breadcrumb onNewChat={handleNewChat} onDemo={handleStartDemo} demoMode={demoMode} />
 
       <div className="flex-1 overflow-y-auto px-5 pt-5 pb-2 bg-neutral-50/50">
+        {showEmptyState && (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="w-12 h-12 rounded-2xl bg-[#FFF4CC] flex items-center justify-center mb-4">
+              <IcoSend size={20} className="text-[#FFCC00]" />
+            </div>
+            <p className="text-sm font-medium text-neutral-600 mb-1">Start a new conversation</p>
+            <p className="text-xs text-neutral-400 max-w-xs">Type a message below, click a suggested prompt, or use the Demo to see Agent Coach in action.</p>
+          </div>
+        )}
         {msgs.map(m => (
           <Bubble key={m.id} msg={m} selected={selected.has(m.id)} onSelect={handleSelect} />
         ))}
@@ -239,7 +248,7 @@ export default function CoachTab() {
               <IcoRight size={14} />
             </button>
           ) : demoFinished ? (
-            <p className="text-xs text-neutral-500 font-medium">Demo complete \u2014 try clicking &ldquo;Use this play&rdquo; on a playbook above, or start a new chat.</p>
+            <p className="text-xs text-neutral-500 font-medium">Demo complete &mdash; try clicking &ldquo;Use this play&rdquo; on a playbook above, or start a new chat.</p>
           ) : null}
           <button onClick={handleExitDemo}
             className="flex items-center gap-1 text-xs text-neutral-400 hover:text-neutral-600 transition-colors">
