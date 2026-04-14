@@ -48,6 +48,7 @@ export default function App() {
       case "workshop": return <WorkshopTab />;
       case "playbook": return <PlaybookTab onAddIntervention={handleAddIntervention} selectedPlaybookId={selectedPlaybookId} onPlaybookHighlighted={() => setSelectedPlaybookId(null)} />;
       case "interventions": return <InterventionsTab interventions={interventions} onAddIntervention={handleAddIntervention} onDeleteIntervention={handleDeleteIntervention} onViewPlaybook={handleViewPlaybook} />;
+      case "interventions-basic": return <InterventionsTab basic interventions={interventions} onAddIntervention={handleAddIntervention} onDeleteIntervention={handleDeleteIntervention} onViewPlaybook={handleViewPlaybook} />;
       case "reports": return <ReportsTab />;
       default: return <CoachTab />;
     }

@@ -12,7 +12,7 @@ const PLAYBOOK_CATEGORY_COLORS = {
   violet: "bg-violet-100 text-violet-700",
 };
 
-export default function InterventionDetail({ intervention, onBack, notes = [], onAddNote = () => {}, onViewPlaybook }) {
+export default function InterventionDetail({ intervention, onBack, notes = [], onAddNote = () => {}, onViewPlaybook, basic = false }) {
   const chartData  = getChartData(intervention.targetId, intervention.metric);
   const metricCfg  = METRIC_OPTIONS.find(m => m.id === intervention.metric);
   const stats      = chartData ? computeBeforeAfter(chartData, intervention.startSprint) : null;
@@ -24,7 +24,7 @@ export default function InterventionDetail({ intervention, onBack, notes = [], o
   const fmt  = (v) => v != null ? `${v.toFixed(1)}${metricCfg?.unit ?? ""}` : "\u2014";
   const sign = stats && stats.delta > 0 ? "+" : "";
 
-  const assessmentText = {
+  const assessmentText = basic ? null : {
     improving: `${metricCfg?.label} has improved from ${fmt(stats?.avgBefore)} to ${fmt(stats?.avgAfter)} over ${stats?.afterCount} sprint${stats?.afterCount !== 1 ? "s" : ""} since the intervention \u2014 a ${Math.abs(stats?.delta ?? 0).toFixed(0)}% improvement. Continue monitoring over the next 2 sprints to confirm the trend is sustained before closing this intervention.`,
     worsening: `${metricCfg?.label} has worsened from ${fmt(stats?.avgBefore)} to ${fmt(stats?.avgAfter)} over ${stats?.afterCount} sprint${stats?.afterCount !== 1 ? "s" : ""} since the intervention \u2014 a ${Math.abs(stats?.delta ?? 0).toFixed(0)}% decline. The coaching action has not yet produced the expected outcome. Consider revisiting the root cause or introducing additional support measures this sprint.`,
     neutral:   `${metricCfg?.label} has been broadly unchanged since the intervention (${fmt(stats?.avgBefore)} \u2192 ${fmt(stats?.avgAfter)}). It may be too early to draw conclusions \u2014 flow changes often take 2\u20133 sprints to materialise. Review again next sprint.`,
@@ -82,7 +82,7 @@ export default function InterventionDetail({ intervention, onBack, notes = [], o
         </div>
       )}
 
-      {chartData ? (
+      {!basic && (chartData ? (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-4">
           <div className="px-4 pt-3 pb-1">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{metricCfg?.label} — {intervention.targetName} · all sprints</p>
@@ -114,12 +114,14 @@ export default function InterventionDetail({ intervention, onBack, notes = [], o
         <div className="bg-slate-50 rounded-xl border border-slate-200 px-4 py-5 text-center mb-4">
           <p className="text-xs text-slate-400">No chart data available for this target and metric combination</p>
         </div>
-      )}
+      ))}
 
-      <div className={`rounded-xl border px-4 py-3.5 ${cfg.bgCls} ${cfg.borderCls}`}>
-        <p className={`text-xs font-semibold uppercase tracking-wide mb-1.5 ${cfg.textCls}`}>Coach Assessment</p>
-        <p className="text-sm text-slate-700 leading-relaxed">{assessmentText[status]}</p>
-      </div>
+      {!basic && (
+        <div className={`rounded-xl border px-4 py-3.5 ${cfg.bgCls} ${cfg.borderCls}`}>
+          <p className={`text-xs font-semibold uppercase tracking-wide mb-1.5 ${cfg.textCls}`}>Coach Assessment</p>
+          <p className="text-sm text-slate-700 leading-relaxed">{assessmentText[status]}</p>
+        </div>
+      )}
 
       {playbook && (
         <div className="mt-4 rounded-xl border border-amber-200 bg-[#FFF4CC]/60 px-4 py-3.5">
