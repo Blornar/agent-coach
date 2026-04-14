@@ -60,7 +60,7 @@ function InterventionsList({ interventions, onSelect, onAdd, onDelete }) {
   );
 }
 
-export default function InterventionsTab({ interventions, onAddIntervention, onDeleteIntervention }) {
+export default function InterventionsTab({ interventions, onAddIntervention, onDeleteIntervention, onViewPlaybook }) {
   const [view, setView] = useState("list");
   const [notesMap, setNotesMap] = useState({});
   const [selected, setSelected] = useState(null);
@@ -88,6 +88,7 @@ export default function InterventionsTab({ interventions, onAddIntervention, onD
         onBack={() => { setSelected(null); setView("list"); }}
         notes={notesMap[selected.id] || []}
         onAddNote={(text) => addNote(selected.id, text)}
+        onViewPlaybook={onViewPlaybook}
       />
     );
   }

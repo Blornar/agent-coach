@@ -19,9 +19,15 @@ export default function App() {
   const [alerts, setAlerts] = useState(ALERTS_DATA);
   const [interventions, setInterventions] = useState(INTERVENTIONS_SEED);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [selectedPlaybookId, setSelectedPlaybookId] = useState(null);
 
   const handleAddIntervention = useCallback((newInt) => {
     setInterventions(prev => [...prev, { ...newInt, id: newInt.id || `int-${++_intId}` }]);
+  }, []);
+
+  const handleViewPlaybook = useCallback((pbId) => {
+    setSelectedPlaybookId(pbId);
+    setTab("playbook");
   }, []);
 
   const handleDeleteIntervention = (id) => {
@@ -40,8 +46,8 @@ export default function App() {
     switch (tab) {
       case "coach": return <CoachTab />;
       case "workshop": return <WorkshopTab />;
-      case "playbook": return <PlaybookTab onAddIntervention={handleAddIntervention} />;
-      case "interventions": return <InterventionsTab interventions={interventions} onAddIntervention={handleAddIntervention} onDeleteIntervention={handleDeleteIntervention} />;
+      case "playbook": return <PlaybookTab onAddIntervention={handleAddIntervention} selectedPlaybookId={selectedPlaybookId} onPlaybookHighlighted={() => setSelectedPlaybookId(null)} />;
+      case "interventions": return <InterventionsTab interventions={interventions} onAddIntervention={handleAddIntervention} onDeleteIntervention={handleDeleteIntervention} onViewPlaybook={handleViewPlaybook} />;
       case "reports": return <ReportsTab />;
       default: return <CoachTab />;
     }
