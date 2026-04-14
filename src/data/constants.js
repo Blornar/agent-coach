@@ -353,8 +353,8 @@ export const NAV = [
   { id: "workshop",             Icon: IcoPencil, label: "Workshop",            badge: null },
   { id: "playbook",             Icon: IcoBook,   label: "Playbook",            badge: null },
   { id: "interventions",        Icon: IcoFlag,   label: "Interventions",       badge: null },
-  { id: "reports",              Icon: IcoClock,  label: "Scheduled Prompts",   badge: null },
   { id: "interventions-basic",  Icon: IcoFlag,   label: "Interventions (Basic)", badge: null },
+  { id: "reports",              Icon: IcoClock,  label: "Scheduled Prompts",   badge: null },
 ];
 
 export const TAB_LABELS = {
