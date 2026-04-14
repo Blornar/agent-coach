@@ -288,6 +288,7 @@ export const INTERVENTIONS_SEED = [
     name: "WIP cap \u2014 hard limit at 6 active items",
     targetId: "phoenix", targetName: "Squad Phoenix", targetType: "squad",
     startSprint: "S21", metric: "flowTime",
+    playbookId: "pb1",
     description: "Agreed with Squad Phoenix to enforce a hard WIP cap of 6 items in the active Jira column. Any item pulled from the backlog requires a corresponding completion first. Implemented via Jira column constraints and reinforced in sprint planning.",
   },
   {
@@ -295,6 +296,7 @@ export const INTERVENTIONS_SEED = [
     name: "Pair programming rotation \u2014 2 reviewers per item",
     targetId: "orion", targetName: "Squad Orion", targetType: "squad",
     startSprint: "S21", metric: "velocity",
+    playbookId: "pb6",
     description: "Introduced a structured pair-programming rotation for Squad Orion to reduce review wait times and knowledge silos. Each item in review must have two reviewers assigned before it can merge, reducing back-and-forth rework cycles.",
   },
 ];

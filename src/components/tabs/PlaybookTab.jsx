@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { IcoCheck, IcoBook } from "@/components/icons";
 import { PLAYBOOK } from "@/data/constants";
 
@@ -12,8 +12,21 @@ const CATEGORY_METRIC = {
   "Knowledge Silos": "efficiency",
 };
 
-export default function PlaybookTab({ onAddIntervention }) {
+export default function PlaybookTab({ onAddIntervention, selectedPlaybookId, onPlaybookHighlighted }) {
   const [clicked, setClicked] = useState({});
+  const [highlightId, setHighlightId] = useState(null);
+  const cardRefs = useRef({});
+
+  useEffect(() => {
+    if (!selectedPlaybookId) return;
+    const el = cardRefs.current[selectedPlaybookId];
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setHighlightId(selectedPlaybookId);
+    const t1 = setTimeout(() => setHighlightId(null), 1800);
+    const t2 = setTimeout(() => onPlaybookHighlighted?.(), 1900);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [selectedPlaybookId, onPlaybookHighlighted]);
 
   const handleUsePlaybook = (pb) => {
     const metric = CATEGORY_METRIC[pb.category] || "flowTime";
@@ -26,6 +39,7 @@ export default function PlaybookTab({ onAddIntervention }) {
       targetType: "squad",
       startSprint: "S21",
       metric,
+      playbookId: pb.id,
     });
     setClicked(prev => ({ ...prev, [pb.id]: true }));
   };
@@ -53,7 +67,11 @@ export default function PlaybookTab({ onAddIntervention }) {
 
       <div className="grid gap-4 max-w-4xl">
         {PLAYBOOK.map(pb => (
-          <div key={pb.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
+          <div
+            key={pb.id}
+            ref={el => { if (el) cardRefs.current[pb.id] = el; }}
+            className={`bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-shadow ${highlightId === pb.id ? "ring-2 ring-[#FFCC00] ring-offset-2" : ""}`}
+          >
             <div className="p-5">
               <div className="flex items-start gap-3 mb-3">
                 <span className={`text-xs font-bold px-3 py-1 rounded-full ${categoryColors[pb.categoryColor] || categoryColors.rose}`}>

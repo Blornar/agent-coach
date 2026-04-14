@@ -1,17 +1,25 @@
 "use client";
-import { IcoFlag, IcoActivity } from "@/components/icons";
-import { METRIC_OPTIONS, INT_STATUS_CFG } from "@/data/constants";
+import { IcoFlag, IcoActivity, IcoBook } from "@/components/icons";
+import { METRIC_OPTIONS, INT_STATUS_CFG, PLAYBOOK } from "@/data/constants";
 import { getChartData, computeBeforeAfter, intStatus } from "@/data/helpers";
 import BeforeAfterChart from "@/components/charts/BeforeAfterChart";
 import NotesInput from "./NotesInput";
 
-export default function InterventionDetail({ intervention, onBack, notes = [], onAddNote = () => {} }) {
+const PLAYBOOK_CATEGORY_COLORS = {
+  rose: "bg-rose-100 text-rose-700",
+  amber: "bg-amber-100 text-amber-700",
+  sky: "bg-sky-100 text-sky-700",
+  violet: "bg-violet-100 text-violet-700",
+};
+
+export default function InterventionDetail({ intervention, onBack, notes = [], onAddNote = () => {}, onViewPlaybook }) {
   const chartData  = getChartData(intervention.targetId, intervention.metric);
   const metricCfg  = METRIC_OPTIONS.find(m => m.id === intervention.metric);
   const stats      = chartData ? computeBeforeAfter(chartData, intervention.startSprint) : null;
   const status     = stats ? intStatus(stats.delta, metricCfg?.lowerIsBetter) : "unknown";
   const cfg        = INT_STATUS_CFG[status];
   const StatusIcon = cfg.Icon;
+  const playbook   = intervention.playbookId ? PLAYBOOK.find(p => p.id === intervention.playbookId) : null;
 
   const fmt  = (v) => v != null ? `${v.toFixed(1)}${metricCfg?.unit ?? ""}` : "\u2014";
   const sign = stats && stats.delta > 0 ? "+" : "";
@@ -112,6 +120,30 @@ export default function InterventionDetail({ intervention, onBack, notes = [], o
         <p className={`text-xs font-semibold uppercase tracking-wide mb-1.5 ${cfg.textCls}`}>Coach Assessment</p>
         <p className="text-sm text-slate-700 leading-relaxed">{assessmentText[status]}</p>
       </div>
+
+      {playbook && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-[#FFF4CC]/60 px-4 py-3.5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-2">From Playbook</p>
+          <div className="flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${PLAYBOOK_CATEGORY_COLORS[playbook.categoryColor] || PLAYBOOK_CATEGORY_COLORS.rose}`}>
+                  {playbook.category}
+                </span>
+                <h4 className="text-sm font-semibold text-slate-800">{playbook.title}</h4>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">{playbook.description}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onViewPlaybook?.(playbook.id)}
+              className="flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:text-amber-800 bg-white/70 hover:bg-white px-3 py-2 rounded-lg border border-amber-200 transition-colors flex-shrink-0"
+            >
+              <IcoBook size={13} /> View playbook
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="mt-5">
         <div className="flex items-center gap-2 mb-4">
