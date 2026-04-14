@@ -7,7 +7,7 @@ import InterventionCard from "@/components/interventions/InterventionCard";
 import InterventionDetail from "@/components/interventions/InterventionDetail";
 import AddInterventionForm from "@/components/interventions/AddInterventionForm";
 
-function InterventionsList({ interventions, onSelect, onAdd, onDelete }) {
+function InterventionsList({ interventions, onSelect, onAdd, onDelete, basic = false }) {
   const improving = interventions.filter(i => {
     const cd = getChartData(i.targetId, i.metric);
     const mo = METRIC_OPTIONS.find(m => m.id === i.metric);
@@ -26,7 +26,7 @@ function InterventionsList({ interventions, onSelect, onAdd, onDelete }) {
     <div className="p-5 overflow-y-auto h-full">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h2 className="text-base font-semibold text-slate-800">Interventions</h2>
+          <h2 className="text-base font-semibold text-slate-800">{basic ? "Interventions (Basic)" : "Interventions"}</h2>
           <p className="text-xs text-slate-400 mt-0.5">
             {interventions.length} active
             {improving > 0 && <span className="text-emerald-600 font-medium"> · {improving} improving</span>}
@@ -60,7 +60,7 @@ function InterventionsList({ interventions, onSelect, onAdd, onDelete }) {
   );
 }
 
-export default function InterventionsTab({ interventions, onAddIntervention, onDeleteIntervention, onViewPlaybook }) {
+export default function InterventionsTab({ interventions, onAddIntervention, onDeleteIntervention, onViewPlaybook, basic = false }) {
   const [view, setView] = useState("list");
   const [notesMap, setNotesMap] = useState({});
   const [selected, setSelected] = useState(null);
@@ -89,6 +89,7 @@ export default function InterventionsTab({ interventions, onAddIntervention, onD
         notes={notesMap[selected.id] || []}
         onAddNote={(text) => addNote(selected.id, text)}
         onViewPlaybook={onViewPlaybook}
+        basic={basic}
       />
     );
   }
@@ -101,6 +102,7 @@ export default function InterventionsTab({ interventions, onAddIntervention, onD
       onSelect={(i) => { setSelected(i); setView("detail"); }}
       onAdd={() => setView("add")}
       onDelete={onDeleteIntervention}
+      basic={basic}
     />
   );
 }

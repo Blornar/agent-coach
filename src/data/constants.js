@@ -349,16 +349,18 @@ export const SEED = [
 export const CHIPS = ["Flow efficiency trend", "WIP load", "Work type breakdown", "Ageing items", "Give me coaching recs", "OKR status", "What-if simulator"];
 
 export const NAV = [
-  { id: "coach",         Icon: IcoChat,   label: "Coach",             badge: null },
-  { id: "workshop",      Icon: IcoPencil, label: "Workshop",          badge: null },
-  { id: "playbook",      Icon: IcoBook,   label: "Playbook",          badge: null },
-  { id: "interventions", Icon: IcoFlag,   label: "Interventions",     badge: null },
-  { id: "reports",       Icon: IcoClock,  label: "Scheduled Prompts", badge: null },
+  { id: "coach",                Icon: IcoChat,   label: "Coach",               badge: null },
+  { id: "workshop",             Icon: IcoPencil, label: "Workshop",            badge: null },
+  { id: "playbook",             Icon: IcoBook,   label: "Playbook",            badge: null },
+  { id: "interventions",        Icon: IcoFlag,   label: "Interventions",       badge: null },
+  { id: "reports",              Icon: IcoClock,  label: "Scheduled Prompts",   badge: null },
+  { id: "interventions-basic",  Icon: IcoFlag,   label: "Interventions (Basic)", badge: null },
 ];
 
 export const TAB_LABELS = {
   coach: "Coach", workshop: "Workshop", playbook: "Playbook",
   interventions: "Interventions", reports: "Scheduled Prompts",
+  "interventions-basic": "Interventions (Basic)",
 };
 
 export const CONF = {
