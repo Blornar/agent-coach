@@ -9,6 +9,7 @@ import { buildScope } from "@/context/CoachContext";
 import Bubble from "./Bubble";
 import Typing from "./Typing";
 import WhatIfPanel from "./WhatIfPanel";
+import WelcomeCard from "./WelcomeCard";
 import Breadcrumb from "./Breadcrumb";
 
 export default function CoachTab() {
@@ -215,12 +216,13 @@ export default function CoachTab() {
 
       <div className="flex-1 overflow-y-auto px-5 pt-5 pb-2 bg-neutral-50/50">
         {showEmptyState && (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-12 h-12 rounded-2xl bg-[#FFF4CC] flex items-center justify-center mb-4">
-              <IcoSend size={20} className="text-[#FFCC00]" />
+          <div className="flex flex-col items-center justify-center h-full">
+            <div className="w-full max-w-xl px-4">
+              <WelcomeCard onAsk={send} scopeName={scope?.name || "your team"} />
+              <p className="text-xs text-neutral-400 text-center">
+                Type a message below, click a prompt above, or run a Demo to see it in action.
+              </p>
             </div>
-            <p className="text-sm font-medium text-neutral-600 mb-1">Start a new conversation</p>
-            <p className="text-xs text-neutral-400 max-w-xs">Type a message below, click a suggested prompt, or use the Demo to see Agent Coach in action.</p>
           </div>
         )}
         {msgs.map(m => (
@@ -279,7 +281,7 @@ export default function CoachTab() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={demoMode && !demoFinished ? "Press Enter or click Continue to advance the demo..." : "Ask about flow metrics, OKRs, epics, or coaching..."}
+            placeholder={demoMode && !demoFinished ? "Press Enter or click Continue to advance the demo..." : "Ask about squad health, flow metrics, OKRs, coaching recs, or sprint planning..."}
             className="flex-1 text-sm text-neutral-800 placeholder-neutral-400 bg-transparent outline-none"
           />
           {!demoMode && (

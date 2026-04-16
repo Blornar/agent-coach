@@ -92,7 +92,7 @@ export default function Sidebar({ tab, setTab, open, onToggle }) {
           </div>
           <div>
             <p className="text-white font-bold text-sm leading-none">Agent Coach</p>
-            <p className="text-neutral-500 text-xs mt-0.5">AI Delivery Intelligence</p>
+            <p className="text-neutral-500 text-xs mt-0.5">AI Coaching for Delivery Teams</p>
           </div>
         </div>
       </div>
